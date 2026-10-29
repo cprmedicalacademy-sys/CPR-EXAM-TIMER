@@ -588,9 +588,11 @@ export default function App() {
     setNewTopic('');
   };
 
-  // Time calculations
-  const minutes = Math.floor(remainingSeconds / 60);
+  // Time calculations (Hours, Minutes, Seconds)
+  const hours = Math.floor(remainingSeconds / 3600);
+  const minutes = Math.floor((remainingSeconds % 3600) / 60);
   const seconds = remainingSeconds % 60;
+  const formattedHours = String(hours).padStart(2, '0');
   const formattedMinutes = String(minutes).padStart(2, '0');
   const formattedSeconds = String(seconds).padStart(2, '0');
   const progressPercent = totalSeconds > 0 ? Math.min(100, Math.max(0, ((totalSeconds - remainingSeconds) / totalSeconds) * 100)) : 0;
@@ -865,15 +867,59 @@ export default function App() {
                 />
               </div>
 
-              {/* Big Digits Display */}
-              <div className={`font-mono-numbers text-7xl sm:text-8xl md:text-9xl lg:text-[10rem] font-black tracking-tight leading-none mb-2 ${timerTextColor} select-none transition-colors`}>
-                {formattedMinutes}:{formattedSeconds}
+              {/* Big Digits Display: Hours, Minutes, Seconds */}
+              <div className="flex items-center justify-center space-x-1.5 sm:space-x-3 md:space-x-5 my-2 sm:my-3">
+                {/* Hours Block */}
+                <div className="flex flex-col items-center min-w-[70px] sm:min-w-[120px] md:min-w-[160px]">
+                  <span className={`font-mono-numbers text-5xl sm:text-7xl md:text-8xl lg:text-[7.5rem] font-black tracking-tight leading-none ${timerTextColor} select-none transition-colors`}>
+                    {formattedHours}
+                  </span>
+                  <span className="text-[10px] sm:text-xs md:text-sm font-black uppercase tracking-widest text-slate-400 mt-1.5 sm:mt-2.5">
+                    Hours
+                  </span>
+                </div>
+
+                <div className="flex flex-col items-center pb-4 sm:pb-6">
+                  <span className={`font-mono-numbers text-3xl sm:text-5xl md:text-7xl lg:text-8xl font-black ${timerTextColor} opacity-60 select-none`}>
+                    :
+                  </span>
+                </div>
+
+                {/* Minutes Block */}
+                <div className="flex flex-col items-center min-w-[70px] sm:min-w-[120px] md:min-w-[160px]">
+                  <span className={`font-mono-numbers text-5xl sm:text-7xl md:text-8xl lg:text-[7.5rem] font-black tracking-tight leading-none ${timerTextColor} select-none transition-colors`}>
+                    {formattedMinutes}
+                  </span>
+                  <span className="text-[10px] sm:text-xs md:text-sm font-black uppercase tracking-widest text-slate-400 mt-1.5 sm:mt-2.5">
+                    Minutes
+                  </span>
+                </div>
+
+                <div className="flex flex-col items-center pb-4 sm:pb-6">
+                  <span className={`font-mono-numbers text-3xl sm:text-5xl md:text-7xl lg:text-8xl font-black ${timerTextColor} opacity-60 select-none`}>
+                    :
+                  </span>
+                </div>
+
+                {/* Seconds Block */}
+                <div className="flex flex-col items-center min-w-[70px] sm:min-w-[120px] md:min-w-[160px]">
+                  <span className={`font-mono-numbers text-5xl sm:text-7xl md:text-8xl lg:text-[7.5rem] font-black tracking-tight leading-none ${timerTextColor} select-none transition-colors`}>
+                    {formattedSeconds}
+                  </span>
+                  <span className="text-[10px] sm:text-xs md:text-sm font-black uppercase tracking-widest text-slate-400 mt-1.5 sm:mt-2.5">
+                    Seconds
+                  </span>
+                </div>
               </div>
 
-              <div className="flex items-center justify-center space-x-3 text-xs sm:text-sm font-semibold text-slate-400">
+              <div className="flex items-center justify-center space-x-2 sm:space-x-3 text-xs sm:text-sm font-semibold text-slate-400 mt-2">
                 <span>{progressPercent.toFixed(0)}% elapsed</span>
                 <span>&bull;</span>
-                <span>{remainingSeconds <= 0 ? 'Exam Concluded' : `${minutes} min ${seconds} sec remaining`}</span>
+                <span>
+                  {remainingSeconds <= 0
+                    ? 'Exam Concluded'
+                    : `${hours > 0 ? `${hours} hr ` : ''}${minutes} min ${seconds} sec remaining`}
+                </span>
               </div>
             </div>
 
@@ -902,21 +948,30 @@ export default function App() {
                 className="bg-slate-800 hover:bg-slate-700 active:scale-95 text-slate-200 hover:text-white font-bold py-3.5 sm:py-4 px-4 rounded-2xl flex items-center justify-center space-x-2 transition border border-slate-700 text-sm sm:text-base"
               >
                 <RotateCcw className="w-4 h-4" />
-                <span>Reset ({activeExam.durationMinutes}m)</span>
+                <span>Reset ({activeExam.durationMinutes >= 60 ? `${(activeExam.durationMinutes / 60).toFixed(activeExam.durationMinutes % 60 === 0 ? 0 : 1)}h` : `${activeExam.durationMinutes}m`})</span>
+              </button>
+
+              <button
+                onClick={() => adjustTime(3600)}
+                className="bg-slate-800 hover:bg-slate-700 active:scale-95 text-slate-200 hover:text-white font-bold py-3.5 sm:py-4 px-3 rounded-2xl flex items-center justify-center space-x-1.5 transition border border-slate-700 text-sm sm:text-base"
+                title="Add 1 Hour to Clock"
+              >
+                <Plus className="w-4 h-4 text-purple-400" />
+                <span>+1 Hour</span>
               </button>
 
               <button
                 onClick={() => adjustTime(300)}
-                className="bg-slate-800 hover:bg-slate-700 active:scale-95 text-slate-200 hover:text-white font-bold py-3.5 sm:py-4 px-4 rounded-2xl flex items-center justify-center space-x-2 transition border border-slate-700 text-sm sm:text-base"
+                className="bg-slate-800 hover:bg-slate-700 active:scale-95 text-slate-200 hover:text-white font-bold py-3.5 sm:py-4 px-3 rounded-2xl flex items-center justify-center space-x-1.5 transition border border-slate-700 text-sm sm:text-base"
                 title="Add 5 Minutes to Clock"
               >
                 <Plus className="w-4 h-4 text-blue-400" />
-                <span>+5 Mins</span>
+                <span>+5 Min</span>
               </button>
 
               <button
                 onClick={() => adjustTime(60)}
-                className="bg-slate-800 hover:bg-slate-700 active:scale-95 text-slate-200 hover:text-white font-bold py-3.5 sm:py-4 px-4 rounded-2xl flex items-center justify-center space-x-2 transition border border-slate-700 text-sm sm:text-base"
+                className="bg-slate-800 hover:bg-slate-700 active:scale-95 text-slate-200 hover:text-white font-bold py-3.5 sm:py-4 px-3 rounded-2xl flex items-center justify-center space-x-1.5 transition border border-slate-700 text-sm sm:text-base"
                 title="Add 1 Minute to Clock"
               >
                 <Plus className="w-4 h-4 text-emerald-400" />
@@ -924,23 +979,32 @@ export default function App() {
               </button>
             </div>
 
-            {/* Quick Preset Buttons (15m, 30m, 45m, 60m, -1m, -5m) */}
+            {/* Quick Preset Buttons (15m, 30m, 45m, 1h, 1.5h, 2h, 2.5h, 3h, -1m, -5m, -1h) */}
             <div className="flex flex-wrap items-center justify-between gap-2 pt-3 border-t border-slate-800/80 mt-4 text-xs">
               <span className="text-slate-400 font-bold uppercase tracking-wider text-[11px]">
-                Quick Durations:
+                Preset Durations:
               </span>
               <div className="flex items-center space-x-1.5 flex-wrap gap-y-1">
-                {[15, 20, 30, 45, 60, 90, 120].map(mins => (
+                {[
+                  { label: '15m', mins: 15 },
+                  { label: '30m', mins: 30 },
+                  { label: '45m', mins: 45 },
+                  { label: '1 Hr', mins: 60 },
+                  { label: '1.5 Hr', mins: 90 },
+                  { label: '2 Hr', mins: 120 },
+                  { label: '2.5 Hr', mins: 150 },
+                  { label: '3 Hr', mins: 180 }
+                ].map(item => (
                   <button
-                    key={mins}
-                    onClick={() => setPresetDuration(mins)}
+                    key={item.mins}
+                    onClick={() => setPresetDuration(item.mins)}
                     className={`px-2.5 py-1 rounded-lg font-bold transition border ${
-                      totalSeconds === mins * 60
-                        ? 'bg-blue-600 text-white border-blue-500'
+                      totalSeconds === item.mins * 60
+                        ? 'bg-blue-600 text-white border-blue-500 shadow'
                         : 'bg-slate-800/80 text-slate-300 hover:bg-slate-700 border-slate-700'
                     }`}
                   >
-                    {mins}m
+                    {item.label}
                   </button>
                 ))}
                 <span className="text-slate-600 px-1">|</span>
@@ -959,6 +1023,14 @@ export default function App() {
                 >
                   <Minus className="w-3 h-3 text-rose-400" />
                   <span>5m</span>
+                </button>
+                <button
+                  onClick={() => adjustTime(-3600)}
+                  className="px-2 py-1 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-lg border border-slate-700 font-bold flex items-center space-x-1"
+                  title="Minus 1 hour"
+                >
+                  <Minus className="w-3 h-3 text-rose-400" />
+                  <span>1h</span>
                 </button>
               </div>
             </div>
