@@ -1,0 +1,6 @@
+{
+  "name": "CPR Medical Academy - Exam Smart Timer",
+  "description": "Smart board exam timer for FCPS, BCS, Residency, Diploma and medical competitive exams with real-time countdown, acoustic bell chimes, voice announcements, and routine management.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

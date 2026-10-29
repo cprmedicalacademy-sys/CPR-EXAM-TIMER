@@ -1,0 +1,524 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CPR Medical Academy - Smart Board Exam Timer</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                    },
+                    colors: {
+                        cpr: {
+                            red: '#e11d48',
+                            darkred: '#9f1239',
+                            blue: '#1e3a8a',
+                            lightblue: '#3b82f6',
+                            dark: '#0f172a'
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body { font-family: 'Inter', sans-serif; user-select: none; }
+        .glow-effect {
+            text-shadow: 0 0 20px rgba(59, 130, 246, 0.5);
+        }
+        .glow-red {
+            text-shadow: 0 0 25px rgba(225, 29, 72, 0.7);
+        }
+        /* Custom scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #1e293b;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #475569;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body class="bg-slate-950 text-slate-100 min-h-screen flex flex-col justify-between overflow-x-hidden">
+
+    <!-- Top Header Bar -->
+    <header class="bg-slate-900 border-b border-slate-800 px-6 py-4 flex flex-wrap items-center justify-between shadow-lg">
+        <div class="flex items-center space-x-4">
+            <div class="bg-white px-3 py-1.5 rounded-xl shadow flex items-center space-x-2 border border-slate-700">
+                <i class="fa-solid fa-stethoscope text-rose-600 text-xl"></i>
+                <span class="font-black text-slate-900 tracking-wider text-lg">CPR <span class="text-blue-700 font-medium text-xs block">Medical Academy</span></span>
+            </div>
+            <div>
+                <h1 class="text-lg md:text-xl font-bold tracking-tight text-white flex items-center gap-2">
+                    <span class="bg-rose-600 text-xs px-2.5 py-1 rounded-full uppercase tracking-wider font-extrabold animate-pulse">Smart Board</span>
+                    Offline Residency Exam Portal
+                </h1>
+                <p class="text-xs text-slate-400">Motij Tower (5th Floor), Gulsan Road, Chawkbazar, Chattogram</p>
+            </div>
+        </div>
+
+        <div class="flex items-center space-x-4 mt-3 md:mt-0">
+            <!-- Current Real Clock -->
+            <div class="bg-slate-800 px-4 py-2 rounded-xl border border-slate-700 flex items-center space-x-3 shadow-inner">
+                <i class="fa-regular fa-clock text-blue-400 text-xl"></i>
+                <div>
+                    <div id="live-clock" class="text-lg font-mono font-bold text-white tracking-wider">00:00:00 AM</div>
+                    <div id="live-date" class="text-[10px] text-slate-400 uppercase tracking-wider font-semibold">Loading date...</div>
+                </div>
+            </div>
+
+            <!-- Fullscreen & Controls -->
+            <button onclick="toggleFullScreen()" class="bg-slate-800 hover:bg-slate-700 p-3 rounded-xl border border-slate-700 text-slate-300 hover:text-white transition shadow" title="Toggle Fullscreen">
+                <i class="fa-solid fa-expand text-lg"></i>
+            </button>
+            <button onclick="openSettingsModal()" class="bg-blue-600 hover:bg-blue-500 px-4 py-2.5 rounded-xl text-white font-semibold flex items-center space-x-2 transition shadow-lg shadow-blue-900/30">
+                <i class="fa-solid fa-gear"></i>
+                <span class="hidden sm:inline">Settings / Select Exam</span>
+            </button>
+        </div>
+    </header>
+
+    <!-- Main Workspace -->
+    <main class="flex-grow container mx-auto px-4 py-6 grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+        
+        <!-- Left Column: Active Exam & Big Timer (8 Columns) -->
+        <div class="lg:col-span-8 space-y-6">
+            
+            <!-- Active Exam Card -->
+            <div class="bg-gradient-to-br from-slate-900 via-slate-900 to-slate-800 border-2 border-slate-800 rounded-3xl p-6 md:p-8 shadow-2xl relative overflow-hidden">
+                <div class="absolute -right-16 -top-16 w-48 h-48 bg-blue-600/10 rounded-full blur-3xl pointer-events-none"></div>
+                <div class="absolute -left-16 -bottom-16 w-48 h-48 bg-rose-600/10 rounded-full blur-3xl pointer-events-none"></div>
+
+                <div class="flex flex-wrap items-center justify-between gap-4 mb-6">
+                    <div class="flex items-center space-x-3">
+                        <span id="exam-status-badge" class="px-4 py-1.5 rounded-full text-xs font-black uppercase tracking-widest bg-amber-500/20 text-amber-400 border border-amber-500/30">
+                            Ready to Start
+                        </span>
+                        <span class="text-slate-400 text-sm font-medium flex items-center gap-1.5">
+                            <i class="fa-regular fa-calendar-days text-blue-400"></i> <span id="current-exam-date">Loading...</span>
+                        </span>
+                    </div>
+                    <div class="text-slate-300 text-sm font-medium bg-slate-800/80 px-4 py-1.5 rounded-xl border border-slate-700">
+                        Scheduled Time: <span id="current-exam-time" class="text-white font-bold">3.00 - 3.30 PM</span>
+                    </div>
+                </div>
+
+                <!-- Exam Title Header -->
+                <div class="text-center my-6">
+                    <p class="text-xs uppercase font-extrabold tracking-widest text-slate-400 mb-2">Active Exam Topic</p>
+                    <h2 id="current-exam-title" class="text-2xl md:text-4xl font-black text-white tracking-tight glow-effect">
+                        MOCK 1 (Offline Residency)
+                    </h2>
+                </div>
+
+                <!-- Big Countdown Display -->
+                <div class="bg-slate-950/80 border border-slate-800/80 rounded-2xl p-6 md:p-8 text-center shadow-inner my-6">
+                    <div id="timer-display" class="font-mono text-6xl sm:text-8xl md:text-9xl font-black tracking-wider text-blue-400 glow-effect mb-2">
+                        30:00
+                    </div>
+                    <p id="timer-subtitle" class="text-slate-400 text-sm md:text-base font-medium tracking-wide">
+                        Time Remaining for Exam Submission
+                    </p>
+                </div>
+
+                <!-- Timer Control Buttons -->
+                <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-2">
+                    <button onclick="startTimer()" id="btn-start" class="bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-3.5 px-4 rounded-xl flex items-center justify-center space-x-2 transition shadow-lg shadow-emerald-900/30 text-sm md:text-base">
+                        <i class="fa-solid fa-play"></i>
+                        <span>Start Exam</span>
+                    </button>
+                    <button onclick="pauseTimer()" id="btn-pause" class="bg-amber-600 hover:bg-amber-500 text-white font-bold py-3.5 px-4 rounded-xl flex items-center justify-center space-x-2 transition shadow-lg text-sm md:text-base">
+                        <i class="fa-solid fa-pause"></i>
+                        <span>Pause</span>
+                    </button>
+                    <button onclick="resetTimer()" class="bg-rose-600 hover:bg-rose-500 text-white font-bold py-3.5 px-4 rounded-xl flex items-center justify-center space-x-2 transition shadow-lg text-sm md:text-base">
+                        <i class="fa-solid fa-rotate-right"></i>
+                        <span>Reset</span>
+                    </button>
+                    <button onclick="addTime(5)" class="bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-200 font-bold py-3.5 px-4 rounded-xl flex items-center justify-center space-x-2 transition text-sm md:text-base">
+                        <i class="fa-solid fa-plus text-blue-400"></i>
+                        <span>+5 Min</span>
+                    </button>
+                </div>
+
+            </div>
+
+            <!-- Quick Notice Banner for Hall -->
+            <div class="bg-gradient-to-r from-blue-900/40 via-indigo-900/40 to-slate-900 border border-blue-500/30 rounded-2xl p-4 flex items-center justify-between shadow-lg">
+                <div class="flex items-center space-x-3">
+                    <div class="bg-blue-600 p-2.5 rounded-xl text-white">
+                        <i class="fa-solid fa-bullhorn"></i>
+                    </div>
+                    <div>
+                        <h4 class="text-sm font-bold text-white">Hall Instruction / Notice</h4>
+                        <p class="text-xs text-slate-300">Strictly maintain exam time. Mobile phones are strictly prohibited in the exam hall.</p>
+                    </div>
+                </div>
+                <button onclick="playBellSound()" class="bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold px-3 py-2 rounded-lg transition flex items-center space-x-1.5 shadow">
+                    <i class="fa-solid fa-bell"></i>
+                    <span>Ring Bell</span>
+                </button>
+            </div>
+
+        </div>
+
+        <!-- Right Column: Exam Schedule List (4 Columns) -->
+        <div class="lg:col-span-4 space-y-4">
+            <div class="bg-slate-900 border border-slate-800 rounded-3xl p-5 shadow-2xl">
+                <div class="flex items-center justify-between mb-4 pb-3 border-b border-slate-800">
+                    <h3 class="font-bold text-white text-base flex items-center gap-2">
+                        <i class="fa-solid fa-list-check text-rose-500"></i>
+                        Offline Exam Schedule (Nov - 26)
+                    </h3>
+                    <span class="text-xs font-semibold text-rose-400 bg-rose-500/10 px-2 py-1 rounded-lg border border-rose-500/20">Time: 3.00 PM</span>
+                </div>
+
+                <!-- Exam Schedule Container (Scrollable) -->
+                <div id="exam-list-container" class="space-y-2.5 max-h-[520px] overflow-y-auto pr-1">
+                    <!-- Dynamic exam items loaded here via JS -->
+                </div>
+            </div>
+        </div>
+
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-slate-900 border-t border-slate-800 py-3 text-center text-xs text-slate-500">
+        CPR Medical Academy &bull; Offline Residency Last Moment Exam Batch &bull; Smart Board Timer System
+    </footer>
+
+    <!-- Settings & Exam Selector Modal -->
+    <div id="settings-modal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+        <div class="bg-slate-900 border border-slate-700 rounded-3xl max-w-xl w-full p-6 md:p-8 shadow-2xl relative max-h-[90vh] overflow-y-auto">
+            <button onclick="closeSettingsModal()" class="absolute top-5 right-5 text-slate-400 hover:text-white text-xl">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+            
+            <h3 class="text-xl font-bold text-white mb-1 flex items-center gap-2">
+                <i class="fa-solid fa-sliders text-blue-500"></i> Exam Timer Configuration
+            </h3>
+            <p class="text-xs text-slate-400 mb-6">Select any scheduled exam or set a custom duration for today's test.</p>
+
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-xs font-semibold uppercase tracking-wider text-slate-300 mb-2">Select From Routine</label>
+                    <select id="modal-exam-select" onchange="onExamSelectChange()" class="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-3 text-white text-sm focus:outline-none focus:border-blue-500">
+                        <!-- Populated by JS -->
+                    </select>
+                </div>
+
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs font-semibold uppercase tracking-wider text-slate-300 mb-2">Exam Duration (Minutes)</label>
+                        <input type="number" id="modal-duration" value="30" min="1" max="180" class="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-3 text-white text-sm focus:outline-none focus:border-blue-500">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold uppercase tracking-wider text-slate-300 mb-2">Start Time</label>
+                        <input type="text" id="modal-time" value="3.00 PM" class="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-3 text-white text-sm focus:outline-none focus:border-blue-500">
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-semibold uppercase tracking-wider text-slate-300 mb-2">Custom Exam Topic Name</label>
+                    <input type="text" id="modal-topic" placeholder="e.g. MOCK 1 (Pathology & Anatomy)" class="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-3 text-white text-sm focus:outline-none focus:border-blue-500">
+                </div>
+
+                <div class="flex items-center justify-end space-x-3 pt-4 border-t border-slate-800">
+                    <button onclick="closeSettingsModal()" class="bg-slate-800 hover:bg-slate-700 text-slate-300 px-5 py-2.5 rounded-xl font-semibold text-sm transition">Cancel</button>
+                    <button onclick="applyCustomExamSettings()" class="bg-blue-600 hover:bg-blue-500 text-white px-6 py-2.5 rounded-xl font-semibold text-sm transition shadow-lg shadow-blue-900/40">Apply & Load Timer</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Audio Beep Generator using Web Audio API -->
+    <script>
+        // Official CPR Exam Routine Data
+        const examRoutine = [
+            { date: "07/10/26", day: "Wednesday", topic: "Patho 1 (Inflammation Healing Repair + Cell Injury & Adaptation)", time: "3.00 - 3.30 PM", duration: 30 },
+            { date: "10/10/26", day: "Saturday", topic: "Patho 2 ( Neoplasia + Genetics + Immunology )", time: "3.00 - 3.30 PM", duration: 30 },
+            { date: "12/10/26", day: "Monday", topic: "Micro 1 (Bacteriology)", time: "3.00 - 3.30 PM", duration: 30 },
+            { date: "14/10/26", day: "Wednesday", topic: "Micro 2 ( Virology + Parasitology + Mycology )", time: "3.00 - 3.30 PM", duration: 30 },
+            { date: "17/10/26", day: "Saturday", topic: "Pharmacology", time: "3.00 - 3.30 PM", duration: 30 },
+            { date: "19/10/26", day: "Monday", topic: "Clinical/Faculty", time: "3.00 - 3.30 PM", duration: 30 },
+            { date: "21/10/26", day: "Wednesday", topic: "Physio 1 ( CVS+ Respiratory +Renal + Acid Base + Neurophysiology )", time: "3.00 - 3.30 PM", duration: 30 },
+            { date: "24/10/26", day: "Saturday", topic: "Physio 2 (Endocrine + GIT+ Metabolism, Vitamins & Minerals)", time: "3.00 - 3.30 PM", duration: 30 },
+            { date: "26/10/26", day: "Monday", topic: "Anatomy 1 (Abdomen + Thorax+ Histology)", time: "3.00 - 3.30 PM", duration: 30 },
+            { date: "28/10/26", day: "Wednesday", topic: "Anatomy 2 (Extremity +Embryology+ Head neck & Neuroanatomy)", time: "3.00 - 3.30 PM", duration: 30 },
+            { date: "30/10/26", day: "Friday", topic: "MOCK 1", time: "3.00 - 3.30 PM", duration: 30 },
+            { date: "01/11/26", day: "Sunday", topic: "MOCK 2", time: "3.00 - 3.30 PM", duration: 30 }
+        ];
+
+        let currentExam = {
+            date: "01/11/26",
+            day: "Sunday",
+            topic: "MOCK 2",
+            time: "3.00 - 3.30 PM",
+            durationMinutes: 30
+        };
+
+        let totalSeconds = 30 * 60;
+        let remainingSeconds = totalSeconds;
+        let timerInterval = null;
+        let isRunning = false;
+
+        // Initialize App
+        window.onload = function() {
+            // Default select MOCK 2 or upcoming exam (31 Oct or 1 Nov)
+            // Let's set index 11 (MOCK 2) or let user pick. Let's default to MOCK 2 or MOCK 1 based on date.
+            loadRoutineList();
+            populateModalSelect();
+            updateTimerDisplay();
+            updateActiveExamUI();
+
+            // Start live clock ticker
+            setInterval(updateLiveClock, 1000);
+            updateLiveClock();
+        };
+
+        function updateLiveClock() {
+            const now = new Date();
+            let hours = now.getHours();
+            const minutes = String(now.getMinutes()).padStart(2, '0');
+            const seconds = String(now.getSeconds()).padStart(2, '0');
+            const ampm = hours >= 12 ? 'PM' : 'AM';
+            hours = hours % 12;
+            hours = hours ? hours : 12; // the hour '0' should be '12'
+            const formattedTime = `${String(hours).padStart(2, '0')}:${minutes}:${seconds} ${ampm}`;
+            
+            document.getElementById('live-clock').innerText = formattedTime;
+            
+            const options = { weekday: 'long', year: 'numeric', month: 'short', day: 'numeric' };
+            document.getElementById('live-date').innerText = now.toLocaleDateString('en-US', options);
+        }
+
+        function loadRoutineList() {
+            const container = document.getElementById('exam-list-container');
+            container.innerHTML = '';
+
+            examRoutine.forEach((exam, index) => {
+                const isSelected = exam.topic === currentExam.topic;
+                const item = document.createElement('div');
+                item.className = `p-3 rounded-2xl border transition cursor-pointer flex items-center justify-between ${
+                    isSelected 
+                    ? 'bg-blue-950/60 border-blue-500 shadow-md shadow-blue-950' 
+                    : 'bg-slate-800/40 border-slate-800 hover:bg-slate-800 hover:border-slate-700'
+                }`;
+                
+                item.onclick = () => selectExamFromRoutine(index);
+
+                item.innerHTML = `
+                    <div class="pr-2">
+                        <div class="flex items-center space-x-2 mb-1">
+                            <span class="text-[10px] font-bold px-2 py-0.5 rounded bg-slate-800 text-blue-400 border border-slate-700">${exam.date}</span>
+                            <span class="text-[10px] text-slate-400 font-medium">${exam.day}</span>
+                        </div>
+                        <h4 class="text-xs font-bold text-white line-clamp-1">${exam.topic}</h4>
+                    </div>
+                    <div class="text-right flex-shrink-0">
+                        <span class="text-[10px] font-semibold text-rose-400 bg-rose-500/10 px-2 py-1 rounded border border-rose-500/20">${exam.time}</span>
+                    </div>
+                `;
+                container.appendChild(item);
+            });
+        }
+
+        function populateModalSelect() {
+            const select = document.getElementById('modal-exam-select');
+            select.innerHTML = '';
+            examRoutine.forEach((exam, index) => {
+                const opt = document.createElement('option');
+                opt.value = index;
+                opt.text = `${exam.date} (${exam.day}) - ${exam.topic}`;
+                select.appendChild(opt);
+            });
+            // Select MOCK 2 by default if found
+            select.value = 11;
+        }
+
+        function onExamSelectChange() {
+            const index = document.getElementById('modal-exam-select').value;
+            const exam = examRoutine[index];
+            document.getElementById('modal-topic').value = exam.topic;
+            document.getElementById('modal-time').value = exam.time;
+            document.getElementById('modal-duration').value = exam.duration;
+        }
+
+        function selectExamFromRoutine(index) {
+            const exam = examRoutine[index];
+            currentExam = {
+                date: `${exam.date} (${exam.day})`,
+                topic: exam.topic,
+                time: exam.time,
+                durationMinutes: exam.duration
+            };
+            totalSeconds = exam.duration * 60;
+            remainingSeconds = totalSeconds;
+            
+            pauseTimer();
+            updateTimerDisplay();
+            updateActiveExamUI();
+            loadRoutineList();
+        }
+
+        function openSettingsModal() {
+            document.getElementById('settings-modal').classList.remove('hidden');
+        }
+
+        function closeSettingsModal() {
+            document.getElementById('settings-modal').classList.add('hidden');
+        }
+
+        function applyCustomExamSettings() {
+            const topic = document.getElementById('modal-topic').value || "Offline Residency Exam";
+            const time = document.getElementById('modal-time').value || "3.00 - 3.30 PM";
+            const duration = parseInt(document.getElementById('modal-duration').value) || 30;
+
+            currentExam = {
+                date: "Custom Date / Today",
+                topic: topic,
+                time: time,
+                durationMinutes: duration
+            };
+
+            totalSeconds = duration * 60;
+            remainingSeconds = totalSeconds;
+
+            pauseTimer();
+            updateTimerDisplay();
+            updateActiveExamUI();
+            closeSettingsModal();
+        }
+
+        function updateActiveExamUI() {
+            document.getElementById('current-exam-title').innerText = currentExam.topic;
+            document.getElementById('current-exam-date').innerText = currentExam.date;
+            document.getElementById('current-exam-time').innerText = currentExam.time;
+        }
+
+        function updateTimerDisplay() {
+            const mins = Math.floor(remainingSeconds / 60);
+            const secs = remainingSeconds % 60;
+            const displayStr = `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
+            
+            const displayEl = document.getElementById('timer-display');
+            displayEl.innerText = displayStr;
+
+            // Update badge & styling based on remaining time
+            const badge = document.getElementById('exam-status-badge');
+            if (isRunning) {
+                if (remainingSeconds <= 0) {
+                    badge.className = "px-4 py-1.5 rounded-full text-xs font-black uppercase tracking-widest bg-rose-600 text-white animate-bounce shadow-lg shadow-rose-900";
+                    badge.innerText = "Exam Time Over! Stop Writing";
+                    displayEl.className = "font-mono text-6xl sm:text-8xl md:text-9xl font-black tracking-wider text-rose-500 glow-red mb-2";
+                } else if (remainingSeconds <= 300) { // Last 5 mins
+                    badge.className = "px-4 py-1.5 rounded-full text-xs font-black uppercase tracking-widest bg-amber-500 text-slate-950 animate-pulse shadow-lg";
+                    badge.innerText = "Warning: 5 Mins Remaining";
+                    displayEl.className = "font-mono text-6xl sm:text-8xl md:text-9xl font-black tracking-wider text-amber-400 glow-effect mb-2";
+                } else {
+                    badge.className = "px-4 py-1.5 rounded-full text-xs font-black uppercase tracking-widest bg-emerald-500/20 text-emerald-400 border border-emerald-500/30";
+                    badge.innerText = "Exam in Progress";
+                    displayEl.className = "font-mono text-6xl sm:text-8xl md:text-9xl font-black tracking-wider text-blue-400 glow-effect mb-2";
+                }
+            }
+        }
+
+        function startTimer() {
+            if (isRunning) return;
+            if (remainingSeconds <= 0) remainingSeconds = totalSeconds;
+            
+            isRunning = true;
+            document.getElementById('btn-start').classList.add('opacity-50', 'cursor-not-allowed');
+            
+            timerInterval = setInterval(() => {
+                if (remainingSeconds > 0) {
+                    remainingSeconds--;
+                    updateTimerDisplay();
+                    if (remainingSeconds === 0) {
+                        playBellSound();
+                        pauseTimer();
+                    }
+                }
+            }, 1000);
+        }
+
+        function pauseTimer() {
+            isRunning = false;
+            clearInterval(timerInterval);
+            document.getElementById('btn-start').classList.remove('opacity-50', 'cursor-not-allowed');
+            const badge = document.getElementById('exam-status-badge');
+            if (remainingSeconds > 0 && remainingSeconds < totalSeconds) {
+                badge.className = "px-4 py-1.5 rounded-full text-xs font-black uppercase tracking-widest bg-blue-500/20 text-blue-400 border border-blue-500/30";
+                badge.innerText = "Exam Paused";
+            }
+        }
+
+        function resetTimer() {
+            pauseTimer();
+            remainingSeconds = totalSeconds;
+            updateTimerDisplay();
+            const badge = document.getElementById('exam-status-badge');
+            badge.className = "px-4 py-1.5 rounded-full text-xs font-black uppercase tracking-widest bg-amber-500/20 text-amber-400 border border-amber-500/30";
+            badge.innerText = "Ready to Start";
+            document.getElementById('timer-display').className = "font-mono text-6xl sm:text-8xl md:text-9xl font-black tracking-wider text-blue-400 glow-effect mb-2";
+        }
+
+        function addTime(mins) {
+            remainingSeconds += mins * 60;
+            totalSeconds += mins * 60;
+            updateTimerDisplay();
+        }
+
+        // Web Audio API Sound Generator (Bell / Alert buzzer)
+        function playBellSound() {
+            try {
+                const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                
+                // Play 3 pleasant chime rings
+                for (let i = 0; i < 3; i++) {
+                    setTimeout(() => {
+                        const osc = audioCtx.createOscillator();
+                        const gainNode = audioCtx.createGain();
+                        
+                        osc.type = 'sine';
+                        osc.frequency.setValueAtTime(587.33, audioCtx.currentTime); // D5 note
+                        
+                        gainNode.gain.setValueAtTime(0.3, audioCtx.currentTime);
+                        gainNode.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 1.5);
+                        
+                        osc.connect(gainNode);
+                        gainNode.connect(audioCtx.destination);
+                        
+                        osc.start();
+                        osc.stop(audioCtx.currentTime + 1.5);
+                    }, i * 400);
+                }
+            } catch (e) {
+                console.log("Audio not supported or blocked by browser policy");
+            }
+        }
+
+        function toggleFullScreen() {
+            if (!document.fullscreenElement) {
+                document.documentElement.requestFullscreen().catch(err => {
+                    console.log(`Error attempting to enable fullscreen: ${err.message}`);
+                });
+            } else {
+                if (document.exitFullscreen) {
+                    document.exitFullscreen();
+                }
+            }
+        }
+    </script>
+</body>
+</html>
